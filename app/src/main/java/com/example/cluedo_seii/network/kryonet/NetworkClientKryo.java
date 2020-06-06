@@ -65,7 +65,6 @@ public class NetworkClientKryo implements NetworkClient, KryoNetComponent {
                 try {
                     client.connect(5000,host,NetworkConstants.TCP_PORT,NetworkConstants.UDP_PORT);
 
-                    Log.d("WTF", "WTF");
                     ConnectedDTO connectedDTO = new ConnectedDTO();
                     connectedDTO.setConnected(true);
                     sendMessage(connectedDTO);
