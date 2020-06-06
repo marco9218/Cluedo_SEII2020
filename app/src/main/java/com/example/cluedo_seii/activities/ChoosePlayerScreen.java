@@ -207,7 +207,6 @@ public class ChoosePlayerScreen extends AppCompatActivity {
         game.distributeCards();
         GameDTO gameDTO = new GameDTO();
         gameDTO.setGame(game);
-
         server.broadcastMessage(gameDTO);
 
 

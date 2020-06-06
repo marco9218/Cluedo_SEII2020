@@ -6,6 +6,7 @@ import android.graphics.Point;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,9 +21,13 @@ import com.example.cluedo_seii.Player;
 import com.example.cluedo_seii.R;
 import com.example.cluedo_seii.activities.playerGameInteraction.AccuseSomeone;
 import com.example.cluedo_seii.activities.playerGameInteraction.MakeSuspicion;
+import com.example.cluedo_seii.activities.playerGameInteraction.PlayerTurnNotification;
 import com.example.cluedo_seii.activities.playerGameInteraction.SuspectOrAccuse;
 import com.example.cluedo_seii.activities.playerGameInteraction.ThrowDice;
 import com.example.cluedo_seii.activities.playerGameInteraction.ThrowDiceOrUseSecretPassage;
+import com.example.cluedo_seii.network.connectionType;
+import com.example.cluedo_seii.network.kryonet.NetworkClientKryo;
+import com.example.cluedo_seii.network.kryonet.NetworkServerKryo;
 import com.example.cluedo_seii.spielbrett.Gameboard;
 import com.example.cluedo_seii.spielbrett.StartingPoint;
 import com.example.cluedo_seii.spielbrett.RoomElement;
@@ -44,6 +49,9 @@ public class GameboardScreen extends AppCompatActivity  {
     private Intent intent;
     private List<StartingPoint> startingPoints;
     private List<Player> playerMove;
+    private connectionType conType;
+    private NetworkServerKryo server;
+    private NetworkClientKryo client;
 
     private Player currentPlayerInDoor;// TODO: Aufräumen und vielleicht nur mehr das Player Objekt anstatt id und Player Objekt
     private int playerCurrentlyPlayingId;
@@ -56,6 +64,13 @@ public class GameboardScreen extends AppCompatActivity  {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_spielbrett_screen);
+
+        //Netzwerkinitialisierung für die Klasse GameboardScreen
+        if (conType == connectionType.CLIENT) {
+            client = NetworkClientKryo.getInstance();
+        } else if (conType == connectionType.HOST) {
+            server = NetworkServerKryo.getInstance();
+        }
 
         /*
             0 = GameField
@@ -259,6 +274,8 @@ public class GameboardScreen extends AppCompatActivity  {
         this.currentPlayerInDoor = currentPlayerInDoor;
     }
 
+
+
     private void startGame(){
             //TODO initialize Game according to GameLobby Settings
             //Instanz eines Game-objektes Zu Demonstrationszwecken
@@ -278,6 +295,7 @@ public class GameboardScreen extends AppCompatActivity  {
             game.setPlayers(players);
             game.setLocalPlayer(player1);
             game.distributeCards(); //um Notepad cheatFunction zu demonstrieren
+            //game.nextPlayer();
 
 
         //Ausführung erfolgt wenn Methode changeGameState der Instanz game aufgerufen wird
@@ -290,40 +308,45 @@ public class GameboardScreen extends AppCompatActivity  {
                 //Ausgeführt bei GameState.PLAYERTURNBEGIN)
                 if(game.getGameState().equals(GameState.PLAYERTURNBEGIN)){
                     if(game.getCurrentPlayer().getId()==game.getLocalPlayer().getId()){
-                        if (//Prüfe ob Spieler sich in einen Raum befindet
-                            game.getCurrentPlayer().getPosition().x == 3 && game.getCurrentPlayer().getPosition().y==2  ||
-                            game.getCurrentPlayer().getPosition().x == 6 && game.getCurrentPlayer().getPosition().y==2  ||
-                            game.getCurrentPlayer().getPosition().x == 9 && game.getCurrentPlayer().getPosition().y==2  ||
-                            game.getCurrentPlayer().getPosition().x == 3 && game.getCurrentPlayer().getPosition().y==5  ||
-                            game.getCurrentPlayer().getPosition().x == 1 && game.getCurrentPlayer().getPosition().y==6  ||
-                            game.getCurrentPlayer().getPosition().x == 3 && game.getCurrentPlayer().getPosition().y==13 ||
-                            game.getCurrentPlayer().getPosition().x == 4 && game.getCurrentPlayer().getPosition().y==17 ||
-                            game.getCurrentPlayer().getPosition().x == 7 && game.getCurrentPlayer().getPosition().y==17 ||
-                            game.getCurrentPlayer().getPosition().x == 9 && game.getCurrentPlayer().getPosition().y==13 ||
-                            game.getCurrentPlayer().getPosition().x == 8 && game.getCurrentPlayer().getPosition().y==9  ||
-                            game.getCurrentPlayer().getPosition().x == 8 && game.getCurrentPlayer().getPosition().y==8){
-                            throwDiceOrUseSecretPassage();
-                        }
-                        else{
-                            throwDice();
-                        }
-                        }
+                            turnBegin();
+                    }
                     else{//Spieler localPlayer ist nicht am Zug
-
+                        String text = "Spieler " + game.getCurrentPlayer().getId() + " ist am Zug" ;
+                        Toast toast = Toast.makeText(getApplicationContext(), text, Toast.LENGTH_SHORT);
+                        toast.show();
                     }
                 }
 
                 //Ausgefürt bei GameState.PLAVERMOVEMENT
                 else if(game.getGameState().equals(GameState.PLAVERMOVEMENT)){
-                    if(game.getCurrentPlayer().getId()==game.getLocalPlayer().getId()) {
+                    if(game.getCurrentPlayer().getId()==game.getLocalPlayer().getId()){
+                        if (//Prüfe ob Spieler sich in einen Raum befindet
+                                game.getCurrentPlayer().getPosition().x == 3 && game.getCurrentPlayer().getPosition().y==2  ||
+                                        game.getCurrentPlayer().getPosition().x == 6 && game.getCurrentPlayer().getPosition().y==2  ||
+                                        game.getCurrentPlayer().getPosition().x == 9 && game.getCurrentPlayer().getPosition().y==2  ||
+                                        game.getCurrentPlayer().getPosition().x == 3 && game.getCurrentPlayer().getPosition().y==5  ||
+                                        game.getCurrentPlayer().getPosition().x == 1 && game.getCurrentPlayer().getPosition().y==6  ||
+                                        game.getCurrentPlayer().getPosition().x == 3 && game.getCurrentPlayer().getPosition().y==13 ||
+                                        game.getCurrentPlayer().getPosition().x == 4 && game.getCurrentPlayer().getPosition().y==17 ||
+                                        game.getCurrentPlayer().getPosition().x == 7 && game.getCurrentPlayer().getPosition().y==17 ||
+                                        game.getCurrentPlayer().getPosition().x == 9 && game.getCurrentPlayer().getPosition().y==13 ||
+                                        game.getCurrentPlayer().getPosition().x == 8 && game.getCurrentPlayer().getPosition().y==9  ||
+                                        game.getCurrentPlayer().getPosition().x == 8 && game.getCurrentPlayer().getPosition().y==8){
+                            throwDiceOrUseSecretPassage();
+                        }
+                        else{
+                            throwDice();
+                        }
                     }
                     else{//Spieler localPlayer ist nicht am Zug
+
                     }
                 }
 
                 //Ausgeführt bei GameState.PLAYERACCUSATION
                 else if(game.getGameState().equals(GameState.PLAYERACCUSATION)){
                    if(game.getCurrentPlayer().getId()==game.getLocalPlayer().getId()){
+
                      if(//Prüfe ob Spieler sich in einen Raum befindet
                              game.getCurrentPlayer().getPosition().x == 3 && game.getCurrentPlayer().getPosition().y==2  ||
                              game.getCurrentPlayer().getPosition().x == 6 && game.getCurrentPlayer().getPosition().y==2  ||
@@ -337,45 +360,63 @@ public class GameboardScreen extends AppCompatActivity  {
                              game.getCurrentPlayer().getPosition().x == 8 && game.getCurrentPlayer().getPosition().y==9  ||
                              game.getCurrentPlayer().getPosition().x == 8 && game.getCurrentPlayer().getPosition().y==8){
                        suspectOrAccuse();}
-                     else{game.changeGameState(GameState.PLAYERTURNEND);}
-                   }
-                   else{//Spieler localPlayer ist nicht am Zug
+                     else{ //Wenn der sich am Zug befindende sich Spieler nicht in einen Raum befindet
+                     game.changeGameState(GameState.PLAYERTURNEND);
+                     game.nextPlayer();}
+                     if(conType==connectionType.CLIENT){
+                     client.sendGame(game);}
+                     else if(conType==connectionType.HOST){
+                     server.sendGame(game);}
                    }
                 }
 
                 //Ausgeführt bei GameState.PLAYERTURNEND
-                else if(game.getGameState().equals(GameState.PLAYERTURNEND)){
-                    int wrongAccusers = 0;
+                else if(game.getGameState().equals(GameState.PLAYERTURNEND)) {
+                    if (game.getCurrentPlayer().getId() == game.getLocalPlayer().getId()) {
+                        int wrongAccusers = 0;
 
-                    //prüfe Spielbeendigungsbedingungen
-                   for(Player player: game.getPlayers()){
-                        if(player.getMadeFalseAccusation()==true){
-                            wrongAccusers++;
+                        //prüfe Spielbeendigungsbedingungen
+                        for (Player player : game.getPlayers()) {
+                            if (player.getMadeFalseAccusation() == true) {
+                                wrongAccusers++;
+                            }
+                        }
+                        if (wrongAccusers == game.getPlayers().size()) {
+                            game.setGameOver(true);
+                            game.changeGameState(GameState.END);
+                        } else if (game.getGameOver() == true) {
+                            game.changeGameState(GameState.END);
+                        }
+
+                        //wenn Abbruchbedingungen nicht zutreffen
+                        else {//nächster Spieler
+                            game.nextPlayer();
+                            game.changeGameState(GameState.PLAYERTURNBEGIN);
+                            if (conType == connectionType.CLIENT) {
+                                client.sendGame(game);
+                            } else if (conType == connectionType.HOST) {
+                                server.sendGame(game);
+                            }
                         }
                     }
-                    if(wrongAccusers==game.getPlayers().size()){
-                        game.setGameOver(true);
-                        game.changeGameState(GameState.END);
-                    }
-                    else if(game.getGameOver()==true){
-                        game.changeGameState(GameState.END);
-                    }
-
-                    //wenn Abbruchbedingungen nicht zutreffen
-                    else{//nächster Spieler
-                    }
                 }
-
-
                 //Ausgeführt bei GameState.END
                 else if(game.getGameState().equals(GameState.END)){
                     finish();
                 }
             }
         });
+        game.changeGameState(GameState.PLAYERTURNBEGIN);
     }
 
     //Aufruf von DialogOptionen
+
+    //Dialog für SpielerBenachrichtigung bei Rundenbeginn
+    public void turnBegin() {
+        PlayerTurnNotification dialog = new PlayerTurnNotification();
+        dialog.show(manager, mesaggeDialogTag);
+    }
+
 
     //Dialog Würfel werfen
     public void throwDice(){
@@ -429,7 +470,6 @@ public class GameboardScreen extends AppCompatActivity  {
         game = gameUpdate;
     }
 
-
     //EventListener für Swipe-Event
     @Override
     public boolean onTouchEvent (MotionEvent touchEvent){
@@ -460,13 +500,4 @@ public class GameboardScreen extends AppCompatActivity  {
         }
         return false;
     }
-
-
-
-
 }
-
-
-
-
-
