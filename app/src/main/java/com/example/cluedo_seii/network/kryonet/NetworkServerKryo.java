@@ -193,6 +193,7 @@ public class NetworkServerKryo implements KryoNetComponent, NetworkServer {
         }.start();
     }
 
+
     @Override
     public void registerClass(Class c) {
         server.getKryo().register(c);

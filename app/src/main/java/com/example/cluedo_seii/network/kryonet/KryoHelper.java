@@ -7,6 +7,7 @@ import com.example.cluedo_seii.GameCharacter;
 import com.example.cluedo_seii.GameState;
 import com.example.cluedo_seii.InvestigationFile;
 import com.example.cluedo_seii.Player;
+import com.example.cluedo_seii.Suspicion;
 import com.example.cluedo_seii.network.dto.ConnectedDTO;
 import com.example.cluedo_seii.network.dto.GameCharacterDTO;
 import com.example.cluedo_seii.network.dto.GameDTO;
@@ -43,5 +44,6 @@ public class KryoHelper {
         kryoNetComponent.registerClass(InvestigationFile.class);
         kryoNetComponent.registerClass(Card.class);
         kryoNetComponent.registerClass(CardType.class);
+        kryoNetComponent.registerClass(Suspicion.class);
     }
 }
