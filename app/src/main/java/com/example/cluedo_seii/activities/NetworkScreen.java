@@ -13,15 +13,11 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.cluedo_seii.network.Callback;
-import com.example.cluedo_seii.network.NetworkGlobalHost;
 import com.example.cluedo_seii.network.connectionType;
 import com.example.cluedo_seii.network.dto.ConnectedDTO;
 import com.example.cluedo_seii.network.dto.QuitGameDTO;
 import com.example.cluedo_seii.network.dto.RequestDTO;
 import com.example.cluedo_seii.network.dto.TextMessage;
-import com.example.cluedo_seii.network.kryonet.GlobalNetworkHostKryo;
-import com.example.cluedo_seii.network.kryonet.KryoHelper;
-import com.example.cluedo_seii.network.kryonet.KryoNetComponent;
 import com.example.cluedo_seii.network.kryonet.NetworkClientKryo;
 import com.example.cluedo_seii.network.kryonet.NetworkServerKryo;
 
@@ -31,9 +27,8 @@ import java.io.IOException;
 
 public class NetworkScreen extends AppCompatActivity {
     private connectionType conType;
-    //private NetworkServerKryo server;
+    private NetworkServerKryo server;
     private NetworkClientKryo client;
-    private NetworkGlobalHost globalHost;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,8 +44,11 @@ public class NetworkScreen extends AppCompatActivity {
         TextView txtType = findViewById(R.id.typeText);
         txtType.setText("HOST");
 
-        globalHost = GlobalNetworkHostKryo.getInstance();
-        KryoHelper.registerClasses(globalHost);
+        server = NetworkServerKryo.getInstance();
+        server.registerClass(RequestDTO.class);
+        server.registerClass(TextMessage.class);
+        server.registerClass(QuitGameDTO.class);
+        server.registerClass(ConnectedDTO.class);
         try {
             server.start();
         } catch (IOException e) {

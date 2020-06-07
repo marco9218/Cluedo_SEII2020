@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 
+import com.example.cluedo_seii.Card;
 import com.example.cluedo_seii.DeckOfCards;
 import com.example.cluedo_seii.Game;
 import com.example.cluedo_seii.GameCharacter;
@@ -26,6 +27,8 @@ import com.example.cluedo_seii.activities.playerGameInteraction.SuspectOrAccuse;
 import com.example.cluedo_seii.activities.playerGameInteraction.ThrowDice;
 import com.example.cluedo_seii.activities.playerGameInteraction.ThrowDiceOrUseSecretPassage;
 import com.example.cluedo_seii.network.connectionType;
+import com.example.cluedo_seii.network.dto.GameDTO;
+import com.example.cluedo_seii.network.dto.RequestDTO;
 import com.example.cluedo_seii.network.kryonet.NetworkClientKryo;
 import com.example.cluedo_seii.network.kryonet.NetworkServerKryo;
 import com.example.cluedo_seii.spielbrett.Gameboard;
@@ -64,13 +67,34 @@ public class GameboardScreen extends AppCompatActivity  {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_spielbrett_screen);
+        game = Game.getInstance();
+        bundle = new Bundle();
+        mesaggeDialogTag = "MessageDialog";
+        manager = getSupportFragmentManager();
 
-        //Netzwerkinitialisierung für die Klasse GameboardScreen
+        //Netzwerkinitialisierung für die Klasse GameboardScreen und
+        // Zuweisung der SPielerkarten an localPlayer
+        conType = StartGameScreen.conType;
         if (conType == connectionType.CLIENT) {
             client = NetworkClientKryo.getInstance();
+
+            for(Player player: game.getPlayers()){
+            if(game.getLocalPlayer().getId()==player.getId()){
+                for(Card card: player.getPlayerCards()){
+                    game.getLocalPlayer().addCard(card);
+                    //zuTestzwekcen
+                    game.getLocalPlayer().setPosition(new Point(0,0));
+                }
+            }
+            }
         } else if (conType == connectionType.HOST) {
             server = NetworkServerKryo.getInstance();
+
+            //zuTestzwekcen
+                game.getLocalPlayer().setPosition(new Point(0,0));
         }
+
+
 
         /*
             0 = GameField
@@ -209,12 +233,6 @@ public class GameboardScreen extends AppCompatActivity  {
         gameboard = new Gameboard(this,13,20, gameBoard);
         setContentView(gameboard.getLayout());
 
-        bundle = new Bundle();
-        mesaggeDialogTag = "MessageDialog";
-        manager = getSupportFragmentManager();
-
-        //TODO delete
-        startGame();
 
         gameboard.spawnPlayer(startingPoints, this);
 
@@ -227,10 +245,11 @@ public class GameboardScreen extends AppCompatActivity  {
                     new Player(countPlayerIds++, gameCharacter)
             );
         }
-
         // Wenn sich die Id ändert, dann danach updateGameboardScreen machen so wie hier!
         playerCurrentlyPlayingId = 0;
         gameboard.updateGameboardScreen(this);
+
+        gameSetOnChangeListener();
     }
 
     public Gameboard getGameboard() {
@@ -281,7 +300,6 @@ public class GameboardScreen extends AppCompatActivity  {
             //Instanz eines Game-objektes Zu Demonstrationszwecken
             deckOfCards = new DeckOfCards();
             players = new LinkedList<>();
-
             GameCharacter gameCharacter = new GameCharacter("Prof. Bloom", new Point(0,0));
             GameCharacter gameCharacterAlt = new GameCharacter("Fräulein Weiss", new Point(0,0));
             Player player1 = new Player(1, gameCharacterAlt);
@@ -295,16 +313,14 @@ public class GameboardScreen extends AppCompatActivity  {
             game.setPlayers(players);
             game.setLocalPlayer(player1);
             game.distributeCards(); //um Notepad cheatFunction zu demonstrieren
-            //game.nextPlayer();
+          }
 
-
+    private void gameSetOnChangeListener(){
         //Ausführung erfolgt wenn Methode changeGameState der Instanz game aufgerufen wird
         game.setListener(new Game.ChangeListener() {
             @Override
-
             //Wird ausgeführt wenn Methode changeGameState aufgerufen wird
             public void onChange() {
-
                 //Ausgeführt bei GameState.PLAYERTURNBEGIN)
                 if(game.getGameState().equals(GameState.PLAYERTURNBEGIN)){
                     if(game.getCurrentPlayer().getId()==game.getLocalPlayer().getId()){
@@ -318,20 +334,20 @@ public class GameboardScreen extends AppCompatActivity  {
                 }
 
                 //Ausgefürt bei GameState.PLAVERMOVEMENT
-                else if(game.getGameState().equals(GameState.PLAVERMOVEMENT)){
+              else if(game.getGameState().equals(GameState.PLAVERMOVEMENT)){
                     if(game.getCurrentPlayer().getId()==game.getLocalPlayer().getId()){
                         if (//Prüfe ob Spieler sich in einen Raum befindet
                                 game.getCurrentPlayer().getPosition().x == 3 && game.getCurrentPlayer().getPosition().y==2  ||
-                                        game.getCurrentPlayer().getPosition().x == 6 && game.getCurrentPlayer().getPosition().y==2  ||
-                                        game.getCurrentPlayer().getPosition().x == 9 && game.getCurrentPlayer().getPosition().y==2  ||
-                                        game.getCurrentPlayer().getPosition().x == 3 && game.getCurrentPlayer().getPosition().y==5  ||
-                                        game.getCurrentPlayer().getPosition().x == 1 && game.getCurrentPlayer().getPosition().y==6  ||
-                                        game.getCurrentPlayer().getPosition().x == 3 && game.getCurrentPlayer().getPosition().y==13 ||
-                                        game.getCurrentPlayer().getPosition().x == 4 && game.getCurrentPlayer().getPosition().y==17 ||
-                                        game.getCurrentPlayer().getPosition().x == 7 && game.getCurrentPlayer().getPosition().y==17 ||
-                                        game.getCurrentPlayer().getPosition().x == 9 && game.getCurrentPlayer().getPosition().y==13 ||
-                                        game.getCurrentPlayer().getPosition().x == 8 && game.getCurrentPlayer().getPosition().y==9  ||
-                                        game.getCurrentPlayer().getPosition().x == 8 && game.getCurrentPlayer().getPosition().y==8){
+                                game.getCurrentPlayer().getPosition().x == 6 && game.getCurrentPlayer().getPosition().y==2  ||
+                                game.getCurrentPlayer().getPosition().x == 9 && game.getCurrentPlayer().getPosition().y==2  ||
+                                game.getCurrentPlayer().getPosition().x == 3 && game.getCurrentPlayer().getPosition().y==5  ||
+                                game.getCurrentPlayer().getPosition().x == 1 && game.getCurrentPlayer().getPosition().y==6  ||
+                                game.getCurrentPlayer().getPosition().x == 3 && game.getCurrentPlayer().getPosition().y==13 ||
+                                game.getCurrentPlayer().getPosition().x == 4 && game.getCurrentPlayer().getPosition().y==17 ||
+                                game.getCurrentPlayer().getPosition().x == 7 && game.getCurrentPlayer().getPosition().y==17 ||
+                                game.getCurrentPlayer().getPosition().x == 9 && game.getCurrentPlayer().getPosition().y==13 ||
+                                game.getCurrentPlayer().getPosition().x == 8 && game.getCurrentPlayer().getPosition().y==9  ||
+                                game.getCurrentPlayer().getPosition().x == 8 && game.getCurrentPlayer().getPosition().y==8){
                             throwDiceOrUseSecretPassage();
                         }
                         else{
@@ -339,7 +355,6 @@ public class GameboardScreen extends AppCompatActivity  {
                         }
                     }
                     else{//Spieler localPlayer ist nicht am Zug
-
                     }
                 }
 
@@ -363,16 +378,13 @@ public class GameboardScreen extends AppCompatActivity  {
                      else{ //Wenn der sich am Zug befindende sich Spieler nicht in einen Raum befindet
                      game.changeGameState(GameState.PLAYERTURNEND);
                      game.nextPlayer();}
-                     if(conType==connectionType.CLIENT){
-                     client.sendGame(game);}
-                     else if(conType==connectionType.HOST){
-                     server.sendGame(game);}
                    }
                 }
 
                 //Ausgeführt bei GameState.PLAYERTURNEND
-                else if(game.getGameState().equals(GameState.PLAYERTURNEND)) {
-                    if (game.getCurrentPlayer().getId() == game.getLocalPlayer().getId()) {
+              else if(game.getGameState().equals(GameState.PLAYERTURNEND)) {
+
+                   if (game.getCurrentPlayer().getId() == game.getLocalPlayer().getId()) {
                         int wrongAccusers = 0;
 
                         //prüfe Spielbeendigungsbedingungen
@@ -392,11 +404,6 @@ public class GameboardScreen extends AppCompatActivity  {
                         else {//nächster Spieler
                             game.nextPlayer();
                             game.changeGameState(GameState.PLAYERTURNBEGIN);
-                            if (conType == connectionType.CLIENT) {
-                                client.sendGame(game);
-                            } else if (conType == connectionType.HOST) {
-                                server.sendGame(game);
-                            }
                         }
                     }
                 }
@@ -465,10 +472,7 @@ public class GameboardScreen extends AppCompatActivity  {
         startActivity(new Intent(this, ShowCards.class));
         overridePendingTransition(R.anim.slide_left_in, R.anim.slide_left_out);
     }
-
-    public void updateGame(Game gameUpdate){
-        game = gameUpdate;
-    }
+    
 
     //EventListener für Swipe-Event
     @Override
